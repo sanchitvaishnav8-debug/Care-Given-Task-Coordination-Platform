@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CareCircle - Caregiver Task Coordination Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EDF3F1;--card:#FFFFFF;--ink:#17302E;--muted:#5B6F6D;--line:#D6E2DF;--brand:#1E6B66;--side:#12403D;--amber:#F2B84B;--bad:#B4412F;--badbg:#FBE6E1;--warn:#8A5A0B;--warnbg:#FBF1DC;--ok:#2E7D4F;--okbg:#DFF2E6;--field:#FFFFFF}
+body.dark{--bg:#0F1A19;--card:#182625;--ink:#E4EFED;--muted:#9BB3AF;--line:#2B3F3C;--brand:#2B9C94;--side:#0A2220;--badbg:#3A1F1A;--warnbg:#3A2E12;--okbg:#17321F;--bad:#F08B79;--warn:#F2C26B;--ok:#6FD197;--field:#1F302E}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Atkinson Hyperlegible",system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.hidden{display:none!important}
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+nav{background:var(--side);color:#fff;padding:22px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px}
+nav h1{font-size:22px;margin:0 10px 20px;line-height:1.2}
+nav h1 small{display:block;font-size:14px;font-weight:400;opacity:.7}
+nav button{background:none;border:0;color:#CFE3E0;text-align:left;padding:11px 14px;border-radius:10px;cursor:pointer;display:flex;justify-content:space-between}
+nav button:hover{background:#ffffff18}
+nav button.active{background:#fff;color:var(--side);font-weight:700}
+nav .themeBtn{margin-top:auto;border:1px solid #ffffff44}
+.count{background:var(--bad);color:#fff;border-radius:99px;padding:0 8px;font-size:13px}
+main{padding:26px 34px 70px;max-width:1040px;width:100%}
+.topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:22px}
+.topbar h2{margin:0;font-size:30px}
+.who{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:5px 6px 5px 16px;font-size:14px}
+.who select{border:0;background:var(--bg);border-radius:99px;padding:7px 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px}
+.card h3{margin:0 0 12px;font-size:19px}
+.hero{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;margin-bottom:18px}
+.next{background:var(--brand);color:#fff;border-radius:16px;padding:26px;display:flex;flex-direction:column;justify-content:space-between;gap:16px;min-height:200px}
+.next .label{opacity:.85;font-size:15px}
+.next .big{font-size:44px;font-weight:700;line-height:1.1;margin:4px 0}
+.next .name{font-size:22px}
+.next p{margin:4px 0 0;opacity:.9}
+.ringCard{display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0}
+.ring{position:relative;width:130px;height:130px}
+.ring svg{transform:rotate(-90deg)}
+.ring span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+.stat b{font-size:30px;display:block}.stat span{color:var(--muted);font-size:14px}
+ul{list-style:none;margin:0;padding:0}
+.task{display:flex;gap:14px;align-items:flex-start;padding:14px 0 14px 14px;border-top:1px solid var(--line);border-left:5px solid var(--line);margin-left:-4px}
+.task:first-child{border-top:0}
+.task.High{border-left-color:var(--bad)}.task.Medium{border-left-color:var(--amber)}.task.Low{border-left-color:var(--ok)}
+.tick{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--brand);background:var(--card);color:transparent;cursor:pointer;font-weight:700}
+.tick:hover:not(:disabled){background:var(--brand);color:#fff}
+.tick:disabled{opacity:.4;cursor:not-allowed}
+.task.done .tick{background:var(--ok);border-color:var(--ok);color:#fff;opacity:1}
+.task.done strong{text-decoration:line-through;color:var(--muted)}
+.info{flex:1;min-width:0}.info p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.meta{display:flex;flex-wrap:wrap;gap:2px 14px;color:var(--muted);font-size:14px}
+.badge{font-size:13px;border-radius:99px;padding:2px 11px;background:var(--bg);white-space:nowrap}
+.badge.overdue{background:var(--badbg);color:var(--bad)}.badge.soon{background:var(--warnbg);color:var(--warn)}.badge.done{background:var(--okbg);color:var(--ok)}
+.actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{background:var(--brand);color:#fff;border:0;border-radius:10px;padding:10px 18px;cursor:pointer;font-weight:700}
+.btn.ghost{background:transparent;color:var(--brand);border:1px solid var(--brand)}
+.btn.light{background:#fff;color:var(--side);align-self:flex-start}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btn.small{padding:4px 12px;font-size:14px;font-weight:400}
+.btn:hover{filter:brightness(1.1)}
+label{display:block;font-weight:700;font-size:14px;margin:12px 0 4px}
+input,select,textarea{width:100%;border:1px solid var(--line);background:var(--field);border-radius:10px;padding:10px 12px}
+input:disabled,textarea:disabled{opacity:.7}
+.formGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px}
+.filters{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:8px}
+.week{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:10px;overflow-x:auto;padding-bottom:8px}
+.day{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:170px}
+.day.today{border:2px solid var(--brand)}
+.day h4{margin:0 0 10px}
+.slot{font-size:14px;border-left:4px solid var(--brand);background:var(--bg);padding:6px 9px;margin-bottom:8px;border-radius:6px}
+.slot.done{border-color:var(--ok);opacity:.6;text-decoration:line-through}
+.slot.overdue{border-color:var(--bad)}
+.member{display:flex;gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.member:first-child{border-top:0}
+.avatar{flex:none;width:44px;height:44px;border-radius:50%;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.role{font-size:12px;border-radius:6px;padding:1px 9px;background:var(--okbg);color:var(--ok)}
+.role.Admin{background:var(--warnbg);color:var(--warn)}.role.Viewer{background:var(--bg);color:var(--muted)}
+.note{border-top:1px solid var(--line);padding:12px 0}
+.note:first-child{border-top:0}
+.note.pinned{background:var(--warnbg);margin:0 -20px;padding:12px 20px}
+.bar{height:14px;background:var(--bg);border-radius:99px;overflow:hidden}
+#barFill{height:100%;width:0;background:var(--ok);border-radius:99px;transition:width .5s}
+.rowBetween{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.hint,.empty{color:var(--muted)}
+dialog{border:0;border-radius:16px;padding:24px;width:min(460px,94vw);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:#0a1d1ccc}
+#toast{position:fixed;right:16px;top:16px;display:grid;gap:8px;z-index:20}
+#toast div{background:#17302E;color:#fff;padding:12px 18px;border-radius:12px;max-width:320px;border-left:5px solid var(--amber)}
+@media(max-width:860px){
+.layout{grid-template-columns:1fr}
+nav{position:fixed;top:auto;bottom:0;left:0;right:0;height:auto;flex-direction:row;padding:6px;z-index:10;overflow-x:auto}
+nav h1{display:none}nav button{white-space:nowrap;padding:10px 12px}nav .themeBtn{margin-top:0}
+main{padding:18px 14px 90px}.hero{grid-template-columns:1fr}.formGrid,.filters{grid-template-columns:1fr}
+.topbar h2{font-size:24px}.next .big{font-size:34px}
+}
+@media print{nav,.topbar,.btn,.filters,form,#toast{display:none!important}.layout{display:block}body{background:#fff;color:#000}.page{display:block!important}.card{border:1px solid #999}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav id="menu">
+<h1>CareCircle<small id="careFor"></small></h1>
+<button data-page="dashboard" class="active">Dashboard</button>
+<button data-page="tasks">Tasks</button>
+<button data-page="schedule">Schedule</button>
+<button data-page="team">Care team</button>
+<button data-page="notes">Notes</button>
+<button data-page="myprofile">My profile</button>
+<button data-page="profile">Care profile</button>
+<button data-page="history">History</button>
+<button id="themeBtn" class="themeBtn">Dark mode</button>
+</nav>
+
+<main>
+<div class="topbar">
+<h2 id="pageTitle">Dashboard</h2>
+<label class="who">Logged in as <select id="userSelect"></select></label>
+</div>
+
+<section id="dashboard" class="page">
+<div class="hero">
+<div class="next" id="nextCard"></div>
+<div class="card ringCard">
+<div class="ring">
+<svg width="130" height="130" viewBox="0 0 100 100">
+<circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg)" stroke-width="10"></circle>
+<circle id="ringFill" cx="50" cy="50" r="42" fill="none" stroke="var(--ok)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 264"></circle>
+</svg>
+<span id="ringText">0%</span>
+</div>
+<p class="hint" id="barText"></p>
+</div>
+</div>
+<div class="stats">
+<div class="stat"><b id="statToday">0</b><span>Tasks today</span></div>
+<div class="stat"><b id="statOverdue">0</b><span>Overdue</span></div>
+<div class="stat"><b id="statDone">0</b><span>Completed so far</span></div>
+</div>
+<div class="card"><h3>Reminders</h3><ul id="reminderList"></ul></div>
+<div class="card"><h3>Today's tasks</h3><ul id="todayList"></ul></div>
+</section>
+
+<section id="tasks" class="page hidden">
+<form id="taskForm" class="card edit-only">
+<h3 id="formTitle">Add a task</h3>
+<div class="formGrid">
+<div><label for="tTitle">Task</label><input id="tTitle" type="text" maxlength="80" required></div>
+<div><label for="tCategory">Category</label>
+<select id="tCategory"><option>Meals</option><option>Personal care</option><option>Mobility</option><option>Household</option><option>Appointments</option><option>Errands</option><option>Companionship</option><option>Other</option></select></div>
+<div><label for="tAssignee">Assign to</label><select id="tAssignee"></select></div>
+<div><label for="tDate">Date</label><input id="tDate" type="date" required></div>
+<div><label for="tTime">Time</label><input id="tTime" type="time"></div>
+<div><label for="tPriority">Priority</label><select id="tPriority"><option>Low</option><option selected>Medium</option><option>High</option></select></div>
+<div><label for="tRepeat">Repeat</label><select id="tRepeat"><option value="none">Does not repeat</option><option value="daily">Every day</option><option value="weekly">Every week</option></select></div>
+<div><label for="tRemind">Remind me</label><select id="tRemind"><option value="0">At the time</option><option value="15" selected>15 min before</option><option value="30">30 min before</option><option value="60">1 hour before</option></select></div>
+</div>
+<label for="tNotes">Instructions (optional)</label>
+<textarea id="tNotes" rows="2" maxlength="200"></textarea>
+<p class="actions"><button class="btn" type="submit" id="saveTaskBtn">Add task</button><button class="btn ghost hidden" type="button" id="cancelEditBtn">Cancel edit</button></p>
+</form>
+<div class="card">
+<div class="filters">
+<input id="searchBox" type="search" placeholder="Search tasks" aria-label="Search tasks">
+<select id="statusFilter" aria-label="Filter tasks"><option value="open">Open tasks</option><option value="all">All tasks</option><option value="overdue">Overdue</option><option value="done">Done</option><option value="mine">Assigned to me</option></select>
+</div>
+<ul id="taskList"></ul>
+</div>
+</section>
+
+<section id="schedule" class="page hidden">
+<p class="hint">The next 7 days. Repeating tasks appear on every matching day.</p>
+<div class="week" id="weekGrid"></div>
+</section>
+
+<section id="team" class="page hidden">
+<form id="memberForm" class="card admin-only">
+<h3>Add a team member</h3>
+<div class="formGrid">
+<div><label for="mName">Name</label><input id="mName" type="text" maxlength="50" required></div>
+<div><label for="mRole">Role</label><select id="mRole"><option>Caregiver</option><option>Viewer</option><option>Admin</option></select></div>
+<div><label for="mPhone">Phone</label><input id="mPhone" type="text" pattern="[0-9 +\(\)\-]{6,20}" title="Use digits, spaces and + - ( ) only"></div>
+</div>
+<p><button class="btn" type="submit">Add member</button></p>
+</form>
+<div class="card"><ul id="memberList"></ul></div>
+<div class="card"><h3>What each role can do</h3>
+<div class="scroll"><table>
+<tr><th>Action</th><th>Admin</th><th>Caregiver</th><th>Viewer</th></tr>
+<tr><td>View everything</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Add, edit and complete tasks, write notes</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+<tr><td>Delete, edit profile, manage team</td><td>Yes</td><td>No</td><td>No</td></tr>
+</table></div></div>
+</section>
+
+<section id="notes" class="page hidden">
+<form id="noteForm" class="card edit-only">
+<label for="noteText">Write a note for the care team</label>
+<textarea id="noteText" rows="3" maxlength="500" required placeholder="Mood, appetite, anything the next person should know"></textarea>
+<p><button class="btn" type="submit">Save note</button></p>
+</form>
+<div class="card"><ul id="noteList"></ul></div>
+</section>
+
+<section id="myprofile" class="page hidden">
+<form id="meForm" class="card">
+<h3>My profile</h3>
+<p class="hint">Fill in your own details. To fill in someone else's, pick them in the "Logged in as" box at the top.</p>
+<div class="formGrid">
+<div><label for="meName">Your name</label><input id="meName" type="text" maxlength="50" required></div>
+<div><label for="meRole">Your role</label><select id="meRole"><option>Admin</option><option>Caregiver</option><option>Viewer</option></select></div>
+<div><label for="mePhone">Your phone</label><input id="mePhone" type="text" pattern="[0-9 +\(\)\-]{6,20}" title="Use digits, spaces and + - ( ) only"></div>
+</div>
+<label for="mePatient">Patient's name</label>
+<input id="mePatient" type="text" maxlength="50" required>
+<p><button class="btn" type="submit">Save my profile</button></p>
+<p class="hint" id="meHint"></p>
+</form>
+</section>
+
+<section id="profile" class="page hidden">
+<form id="profileForm" class="card">
+<div class="formGrid">
+<div><label for="pName">Full name</label><input id="pName" type="text" required></div>
+<div><label for="pAge">Age</label><input id="pAge" type="number" min="0" max="120"></div>
+<div><label for="pPhone">Phone</label><input id="pPhone" type="text"></div>
+</div>
+<label for="pAddress">Address</label><input id="pAddress" type="text">
+<label for="pEmergency">Emergency contact</label><input id="pEmergency" type="text">
+<label for="pLikes">Likes and comforts</label><input id="pLikes" type="text">
+<label for="pNeeds">Daily needs (non-medical)</label><textarea id="pNeeds" rows="3"></textarea>
+<label for="pRoutine">Usual routine</label><input id="pRoutine" type="text">
+<p class="admin-only"><button class="btn" type="submit">Save profile</button></p>
+<p class="hint" id="profileHint"></p>
+</form>
+</section>
+
+<section id="history" class="page hidden">
+<div class="card">
+<div class="rowBetween"><h3>Completion log</h3>
+<div class="actions"><button class="btn ghost small" id="exportBtn">Export CSV</button><button class="btn ghost small" id="printBtn">Print summary</button></div></div>
+<div class="scroll"><table><thead><tr><th>When</th><th>Task</th><th>Done by</th><th>Note</th></tr></thead><tbody id="logBody"></tbody></table></div>
+</div>
+<div class="card"><h3>Activity history</h3><ul id="activityList"></ul></div>
+</section>
+</main>
+</div>
+
+<dialog id="doneDialog">
+<form id="doneForm">
+<h3 id="doneTitle"></h3>
+<label for="doneNote">Add a note (optional)</label>
+<textarea id="doneNote" rows="3" maxlength="200" placeholder="How did it go?"></textarea>
+<p class="actions"><button class="btn" type="submit">Confirm done</button><button class="btn ghost" type="button" id="doneCancel">Cancel</button></p>
+</form>
+</dialog>
+<dialog id="askDialog">
+<h3 id="askText"></h3>
+<p class="actions"><button class="btn danger" type="button" id="askYes">Yes, do it</button><button class="btn ghost" type="button" id="askNo">Cancel</button></p>
+</dialog>
+<div id="toast"></div>
+
+<script>
+var KEY = "carecircle_v2";
+var COLORS = ["#1E6B66", "#B4572F", "#5B5BA8", "#9A3F6B", "#4F7A2B", "#2D6A9F"];
+var data = loadData();
+var currentPage = "dashboard";
+var editingId = "";
+var doneId = "";
+var shownReminders = {};
+var titles = {dashboard: "Dashboard", tasks: "Tasks", schedule: "Schedule", team: "Care team", myprofile: "My profile", notes: "Notes", profile: "Care profile", history: "History"};
+
+function el(id) { return document.getElementById(id); }
+function pad(n) { return n < 10 ? "0" + n : "" + n; }
+function makeId() { return "id" + Date.now() + Math.floor(Math.random() * 10000); }
+
+function dateToString(d) {
+  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+}
+
+function todayString() { return dateToString(new Date()); }
+
+function addDays(dateText, n) {
+  var d = new Date(dateText + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return dateToString(d);
+}
+
+function escapeHtml(text) {
+  var div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showDate(dateText) {
+  var d = new Date(dateText + "T00:00:00");
+  return d.toLocaleDateString("en-IN", {weekday: "short", day: "numeric", month: "short"});
+}
+
+function showTime(timeText) {
+  if (!timeText) { return "Anytime"; }
+  var parts = timeText.split(":");
+  var hour = parseInt(parts[0], 10);
+  var suffix = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12;
+  if (hour === 0) { hour = 12; }
+  return hour + ":" + parts[1] + " " + suffix;
+}
+
+function defaultData() {
+  var t = todayString();
+  return {
+    currentUserId: "m1",
+    profile: {name: "Margaret Sharma", age: 78, phone: "98765 43210", address: "12 Rose Lane, Ludhiana", emergency: "Rohan Sharma (son) - 98765 11111", likes: "Tea at 4 pm, old Hindi songs, gentle walks", needs: "Needs help with stairs. Prefers soft food. Uses a walking stick.", routine: "Wakes 7 am, lunch 1 pm, bed 9:30 pm"},
+    members: [
+      {id: "m1", name: "Rohan Sharma", role: "Admin", phone: "98765 11111"},
+      {id: "m2", name: "Anita Sharma", role: "Caregiver", phone: "98765 22222"},
+      {id: "m3", name: "Family Doctor", role: "Viewer", phone: "0161 400 000"}
+    ],
+    tasks: [
+      {id: "t1", title: "Morning tea and breakfast", category: "Meals", assignee: "m2", date: t, time: "08:00", priority: "High", repeat: "daily", remind: 15, done: false, notes: "Soft food, no spicy items"},
+      {id: "t2", title: "Pharmacy pick-up", category: "Errands", assignee: "m1", date: t, time: "11:00", priority: "Medium", repeat: "none", remind: 60, done: false, notes: "Bring the prescription slip"},
+      {id: "t3", title: "Evening walk in the park", category: "Mobility", assignee: "m1", date: t, time: "17:30", priority: "Medium", repeat: "daily", remind: 30, done: false, notes: "Use the walking stick"},
+      {id: "t4", title: "Change bed sheets", category: "Household", assignee: "m2", date: addDays(t, 1), time: "10:00", priority: "Low", repeat: "weekly", remind: 15, done: false, notes: ""},
+      {id: "t5", title: "Check-up visit", category: "Appointments", assignee: "m1", date: addDays(t, 3), time: "12:00", priority: "High", repeat: "none", remind: 60, done: false, notes: "Carry old reports"}
+    ],
+    logs: [],
+    notes: [
+      {id: "n1", text: "Allergic to penicillin. Tell any new helper.", author: "m1", time: new Date().toLocaleString("en-IN"), pinned: true},
+      {id: "n2", text: "Slept well last night and enjoyed the khichdi at lunch.", author: "m2", time: new Date().toLocaleString("en-IN"), pinned: false}
+    ],
+    activity: [{text: "Created the care circle", who: "Rohan Sharma", time: new Date().toLocaleString("en-IN")}]
+  };
+}
+
+function loadData() {
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY));
+    if (saved) { return saved; }
+  } catch (e) {}
+  return defaultData();
+}
+
+function saveData() {
+  try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+}
+
+function getMember(id) {
+  for (var i = 0; i < data.members.length; i++) {
+    if (data.members[i].id === id) { return data.members[i]; }
+  }
+  return null;
+}
+
+function getMemberName(id) {
+  var m = getMember(id);
+  return m ? m.name : "Unassigned";
+}
+
+function currentUser() { return getMember(data.currentUserId) || data.members[0]; }
+function isAdmin() { return currentUser().role === "Admin"; }
+function canEdit() { return currentUser().role !== "Viewer"; }
+
+function findTask(id) {
+  for (var i = 0; i < data.tasks.length; i++) {
+    if (data.tasks[i].id === id) { return data.tasks[i]; }
+  }
+  return null;
+}
+
+function addActivity(text) {
+  data.activity.unshift({text: text, who: currentUser().name, time: new Date().toLocaleString("en-IN")});
+  if (data.activity.length > 200) { data.activity.pop(); }
+}
+
+function dueDate(task) { return new Date(task.date + "T" + (task.time || "23:59") + ":00"); }
+function compareTasks(a, b) { return dueDate(a) - dueDate(b); }
+
+function taskState(task) {
+  if (task.done) { return "done"; }
+  var now = new Date();
+  var due = dueDate(task);
+  if (due < now) { return "overdue"; }
+  var minutesLeft = (due - now) / 60000;
+  if (minutesLeft <= task.remind) { return "soon"; }
+  return "upcoming";
+}
+
+function taskOnDate(task, dateText) {
+  if (dateText < task.date) { return false; }
+  if (task.repeat === "daily") { return true; }
+  if (task.repeat === "weekly") {
+    return new Date(dateText + "T00:00:00").getDay() === new Date(task.date + "T00:00:00").getDay();
+  }
+  return dateText === task.date;
+}
+
+function avatarHtml(name) {
+  var words = name.split(" ");
+  var initials = words[0].charAt(0);
+  if (words.length > 1) { initials += words[1].charAt(0); }
+  var sum = 0;
+  for (var i = 0; i < name.length; i++) { sum += name.charCodeAt(i); }
+  return '<div class="avatar" style="background:' + COLORS[sum % COLORS.length] + '">' + escapeHtml(initials.toUpperCase()) + '</div>';
+}
+
+function showToast(message) {
+  var box = document.createElement("div");
+  box.textContent = message;
+  el("toast").appendChild(box);
+  setTimeout(function () { box.remove(); }, 5000);
+}
+
+function taskHtml(task) {
+  var state = taskState(task);
+  var labels = {done: "Done", overdue: "Overdue", soon: "Due soon", upcoming: "Upcoming"};
+  var html = '<li class="task ' + task.priority + ' ' + state + '">';
+  var disabled = (!canEdit() || task.done) ? " disabled" : "";
+  html += '<button class="tick"' + disabled + ' onclick="openDone(\'' + task.id + '\')" aria-label="Mark done">&#10003;</button>';
+  html += '<div class="info"><strong>' + escapeHtml(task.title) + '</strong>';
+  html += '<div class="meta"><span>' + escapeHtml(task.category) + '</span><span>' + showDate(task.date) + ', ' + showTime(task.time) + '</span><span>' + escapeHtml(getMemberName(task.assignee)) + '</span><span>' + task.priority + ' priority</span>';
+  if (task.repeat !== "none") { html += '<span>Repeats ' + task.repeat + '</span>'; }
+  html += '</div>';
+  if (task.notes) { html += '<p>' + escapeHtml(task.notes) + '</p>'; }
+  html += '</div><div class="actions"><span class="badge ' + state + '">' + labels[state] + '</span>';
+  if (canEdit()) { html += '<button class="btn ghost small" onclick="startEdit(\'' + task.id + '\')">Edit</button>'; }
+  if (isAdmin()) { html += '<button class="btn danger small" onclick="deleteTask(\'' + task.id + '\')">Delete</button>'; }
+  html += '</div></li>';
+  return html;
+}
+
+function renderDashboard() {
+  var today = todayString();
+  var todays = [], attention = [], open = [];
+  var overdueCount = 0, doneCount = data.logs.length;
+  for (var i = 0; i < data.tasks.length; i++) {
+    var task = data.tasks[i];
+    var state = taskState(task);
+    if (taskOnDate(task, today) && task.date === today) { todays.push(task); }
+    if (!task.done) { open.push(task); }
+    if (state === "overdue") { overdueCount++; attention.push(task); }
+    if (state === "soon") { attention.push(task); }
+  }
+  open.sort(compareTasks);
+  todays.sort(compareTasks);
+
+  var next = null;
+  for (var j = 0; j < open.length; j++) {
+    if (taskState(open[j]) !== "overdue") { next = open[j]; break; }
+  }
+  if (!next && open.length > 0) { next = open[0]; }
+
+  if (next) {
+    var btn = canEdit() ? '<button class="btn light" onclick="openDone(\'' + next.id + '\')">Mark done</button>' : "";
+    el("nextCard").innerHTML = '<div><div class="label">Next up</div><div class="big">' + showTime(next.time) + '</div><div class="name">' + escapeHtml(next.title) + '</div><p>' + showDate(next.date) + ' for ' + escapeHtml(getMemberName(next.assignee)) + '</p></div>' + btn;
+  } else {
+    el("nextCard").innerHTML = '<div><div class="label">Next up</div><div class="big">All clear</div><p>There are no open tasks for ' + escapeHtml(data.profile.name) + '.</p></div>';
+  }
+
+  var total = data.tasks.length;
+  var finished = 0;
+  for (var k = 0; k < total; k++) { if (data.tasks[k].done) { finished++; } }
+  var percent = total === 0 ? 0 : Math.round((doneCount / (doneCount + open.length || 1)) * 100);
+  el("ringFill").setAttribute("stroke-dasharray", (percent * 2.64) + " 264");
+  el("ringText").textContent = percent + "%";
+  el("barText").textContent = doneCount + " done, " + open.length + " still open";
+
+  el("statToday").textContent = todays.length;
+  el("statOverdue").textContent = overdueCount;
+  el("statDone").textContent = doneCount;
+
+  var rem = "";
+  attention.sort(compareTasks);
+  for (var a = 0; a < attention.length; a++) { rem += taskHtml(attention[a]); }
+  el("reminderList").innerHTML = rem || '<li class="empty">No reminders right now.</li>';
+
+  var list = "";
+  for (var b = 0; b < todays.length; b++) { list += taskHtml(todays[b]); }
+  el("todayList").innerHTML = list || '<li class="empty">No tasks today. Add one on the Tasks page.</li>';
+}
+
+function renderTasks() {
+  var search = el("searchBox").value.toLowerCase();
+  var filter = el("statusFilter").value;
+  var sorted = data.tasks.slice().sort(compareTasks);
+  var html = "";
+  for (var i = 0; i < sorted.length; i++) {
+    var task = sorted[i];
+    var text = (task.title + " " + task.notes + " " + task.category).toLowerCase();
+    if (search && text.indexOf(search) === -1) { continue; }
+    if (filter === "open" && task.done) { continue; }
+    if (filter === "done" && !task.done) { continue; }
+    if (filter === "overdue" && taskState(task) !== "overdue") { continue; }
+    if (filter === "mine" && (task.assignee !== data.currentUserId || task.done)) { continue; }
+    html += taskHtml(task);
+  }
+  el("taskList").innerHTML = html || '<li class="empty">No tasks match. Try another filter.</li>';
+}
+
+function renderSchedule() {
+  var html = "";
+  for (var i = 0; i < 7; i++) {
+    var date = addDays(todayString(), i);
+    var items = [];
+    for (var j = 0; j < data.tasks.length; j++) {
+      if (taskOnDate(data.tasks[j], date)) { items.push(data.tasks[j]); }
+    }
+    items.sort(function (a, b) { return (a.time || "24:00").localeCompare(b.time || "24:00"); });
+    html += '<div class="day' + (i === 0 ? ' today' : '') + '"><h4>' + (i === 0 ? "Today" : showDate(date)) + '</h4>';
+    for (var k = 0; k < items.length; k++) {
+      var state = items[k].date === date ? taskState(items[k]) : "upcoming";
+      html += '<div class="slot ' + state + '"><b>' + showTime(items[k].time) + '</b><br>' + escapeHtml(items[k].title) + '<br><small>' + escapeHtml(getMemberName(items[k].assignee)) + '</small></div>';
+    }
+    if (items.length === 0) { html += '<small class="empty">Free day</small>'; }
+    html += '</div>';
+  }
+  el("weekGrid").innerHTML = html;
+}
+
+function renderTeam() {
+  var html = "";
+  for (var i = 0; i < data.members.length; i++) {
+    var m = data.members[i];
+    var open = 0;
+    for (var j = 0; j < data.tasks.length; j++) {
+      if (data.tasks[j].assignee === m.id && !data.tasks[j].done) { open++; }
+    }
+    html += '<li class="member">' + avatarHtml(m.name) + '<div class="info"><strong>' + escapeHtml(m.name) + '</strong> <span class="role ' + m.role + '">' + m.role + '</span><div class="meta"><span>' + escapeHtml(m.phone || "No phone") + '</span><span>' + open + ' open tasks</span></div></div>';
+    if (isAdmin() && m.id !== data.currentUserId) {
+      html += '<button class="btn danger small" onclick="deleteMember(\'' + m.id + '\')">Remove</button>';
+    }
+    html += '</li>';
+  }
+  el("memberList").innerHTML = html;
+}
+
+function renderNotes() {
+  var sorted = data.notes.slice().sort(function (a, b) { return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0); });
+  var html = "";
+  for (var i = 0; i < sorted.length; i++) {
+    var n = sorted[i];
+    html += '<li class="note' + (n.pinned ? ' pinned' : '') + '"><div>' + escapeHtml(n.text) + '</div><div class="meta"><span>' + escapeHtml(getMemberName(n.author)) + '</span><span>' + n.time + '</span>' + (n.pinned ? '<span>Pinned</span>' : '') + '</div>';
+    if (canEdit()) {
+      html += '<div class="actions" style="margin-top:6px"><button class="btn ghost small" onclick="togglePin(\'' + n.id + '\')">' + (n.pinned ? "Unpin" : "Pin") + '</button>';
+      if (isAdmin()) { html += '<button class="btn danger small" onclick="deleteNote(\'' + n.id + '\')">Delete</button>'; }
+      html += '</div>';
+    }
+    html += '</li>';
+  }
+  el("noteList").innerHTML = html || '<li class="empty">No notes yet.</li>';
+}
+
+function renderHistory() {
+  var rows = "";
+  for (var i = 0; i < data.logs.length; i++) {
+    var l = data.logs[i];
+    rows += '<tr><td>' + l.time + '</td><td>' + escapeHtml(l.title) + '</td><td>' + escapeHtml(l.who) + '</td><td>' + escapeHtml(l.note) + '</td></tr>';
+  }
+  el("logBody").innerHTML = rows || '<tr><td colspan="4" class="empty">No tasks completed yet.</td></tr>';
+  var acts = "";
+  for (var j = 0; j < data.activity.length; j++) {
+    var a = data.activity[j];
+    acts += '<li class="note"><div>' + escapeHtml(a.text) + '</div><div class="meta"><span>' + escapeHtml(a.who) + '</span><span>' + a.time + '</span></div></li>';
+  }
+  el("activityList").innerHTML = acts;
+}
+
+function fillProfile() {
+  var p = data.profile;
+  el("pName").value = p.name;
+  el("pAge").value = p.age;
+  el("pPhone").value = p.phone;
+  el("pAddress").value = p.address;
+  el("pEmergency").value = p.emergency;
+  el("pLikes").value = p.likes;
+  el("pNeeds").value = p.needs;
+  el("pRoutine").value = p.routine;
+}
+
+function fillSelects() {
+  var users = "", assignees = "";
+  for (var i = 0; i < data.members.length; i++) {
+    var m = data.members[i];
+    users += '<option value="' + m.id + '"' + (m.id === data.currentUserId ? " selected" : "") + '>' + escapeHtml(m.name) + ' (' + m.role + ')</option>';
+    if (m.role !== "Viewer") { assignees += '<option value="' + m.id + '">' + escapeHtml(m.name) + '</option>'; }
+  }
+  el("userSelect").innerHTML = users;
+  var old = el("tAssignee").value;
+  el("tAssignee").innerHTML = assignees;
+  if (old) { el("tAssignee").value = old; }
+}
+
+function applyRole() {
+  var editItems = document.querySelectorAll(".edit-only");
+  for (var i = 0; i < editItems.length; i++) { editItems[i].classList.toggle("hidden", !canEdit()); }
+  var adminItems = document.querySelectorAll(".admin-only");
+  for (var j = 0; j < adminItems.length; j++) { adminItems[j].classList.toggle("hidden", !isAdmin()); }
+  var fields = el("profileForm").querySelectorAll("input, textarea");
+  for (var k = 0; k < fields.length; k++) { fields[k].disabled = !isAdmin(); }
+  el("profileHint").textContent = isAdmin() ? "" : "Only an Admin can edit the profile.";
+}
+
+function showAll() {
+  fillSelects();
+  renderDashboard();
+  renderTasks();
+  renderSchedule();
+  renderTeam();
+  renderNotes();
+  renderHistory();
+  fillProfile();
+  fillMyProfile();
+  applyRole();
+  el("careFor").textContent = "Caring for " + data.profile.name.split(" ")[0];
+  var overdue = 0;
+  for (var i = 0; i < data.tasks.length; i++) { if (taskState(data.tasks[i]) === "overdue") { overdue++; } }
+  var dashBtn = document.querySelector('nav button[data-page="dashboard"]');
+  dashBtn.innerHTML = 'Dashboard' + (overdue ? '<span class="count">' + overdue + '</span>' : '');
+}
+
+function showPage(name) {
+  currentPage = name;
+  var pages = document.querySelectorAll(".page");
+  for (var i = 0; i < pages.length; i++) { pages[i].classList.toggle("hidden", pages[i].id !== name); }
+  var buttons = document.querySelectorAll("nav button[data-page]");
+  for (var j = 0; j < buttons.length; j++) { buttons[j].classList.toggle("active", buttons[j].getAttribute("data-page") === name); }
+  el("pageTitle").textContent = titles[name];
+  window.scrollTo(0, 0);
+}
+
+function clearTaskForm() {
+  el("taskForm").reset();
+  el("tDate").value = todayString();
+  editingId = "";
+  el("formTitle").textContent = "Add a task";
+  el("saveTaskBtn").textContent = "Add task";
+  el("cancelEditBtn").classList.add("hidden");
+}
+
+function saveTask() {
+  var title = el("tTitle").value.trim();
+  if (title === "") { showToast("Please enter a task name."); return; }
+  var info = {
+    title: title,
+    category: el("tCategory").value,
+    assignee: el("tAssignee").value,
+    date: el("tDate").value,
+    time: el("tTime").value,
+    priority: el("tPriority").value,
+    repeat: el("tRepeat").value,
+    remind: Number(el("tRemind").value),
+    notes: el("tNotes").value.trim()
+  };
+  if (editingId) {
+    var task = findTask(editingId);
+    for (var key in info) { task[key] = info[key]; }
+    addActivity("Edited task: " + title);
+  } else {
+    info.id = makeId();
+    info.done = false;
+    data.tasks.push(info);
+    addActivity("Added task: " + title + " for " + getMemberName(info.assignee));
+  }
+  clearTaskForm();
+  saveData();
+  showAll();
+  showToast("Task saved");
+}
+
+function startEdit(id) {
+  var task = findTask(id);
+  editingId = id;
+  el("tTitle").value = task.title;
+  el("tCategory").value = task.category;
+  el("tAssignee").value = task.assignee;
+  el("tDate").value = task.date;
+  el("tTime").value = task.time;
+  el("tPriority").value = task.priority;
+  el("tRepeat").value = task.repeat;
+  el("tRemind").value = String(task.remind);
+  el("tNotes").value = task.notes;
+  el("formTitle").textContent = "Edit task";
+  el("saveTaskBtn").textContent = "Save changes";
+  el("cancelEditBtn").classList.remove("hidden");
+  showPage("tasks");
+  el("tTitle").focus();
+}
+
+function deleteTask(id) {
+  var task = findTask(id);
+  askFirst("Delete the task: " + task.title + "?", function () {
+    data.tasks = data.tasks.filter(function (t) { return t.id !== id; });
+    addActivity("Deleted task: " + task.title);
+    saveData();
+    showAll();
+  });
+}
+
+function openDone(id) {
+  doneId = id;
+  el("doneTitle").textContent = "Mark done: " + findTask(id).title;
+  el("doneNote").value = "";
+  el("doneDialog").showModal();
+}
+
+function finishTask() {
+  var task = findTask(doneId);
+  data.logs.unshift({title: task.title, who: currentUser().name, time: new Date().toLocaleString("en-IN"), note: el("doneNote").value.trim()});
+  addActivity("Completed task: " + task.title);
+  var base = task.date < todayString() ? todayString() : task.date;
+  if (task.repeat === "daily") { task.date = addDays(base, 1); }
+  else if (task.repeat === "weekly") { task.date = addDays(base, 7); }
+  else { task.done = true; }
+  el("doneDialog").close();
+  saveData();
+  showAll();
+  showToast("Logged: " + task.title);
+}
+
+function addMember() {
+  var member = {id: makeId(), name: el("mName").value.trim(), role: el("mRole").value, phone: el("mPhone").value.trim()};
+  data.members.push(member);
+  addActivity("Added " + member.name + " as " + member.role);
+  el("memberForm").reset();
+  saveData();
+  showAll();
+  showToast(member.name + " added");
+}
+
+function deleteMember(id) {
+  var m = getMember(id);
+  askFirst("Remove " + m.name + "? Their tasks will become unassigned.", function () {
+    for (var i = 0; i < data.tasks.length; i++) {
+      if (data.tasks[i].assignee === id) { data.tasks[i].assignee = ""; }
+    }
+    data.members = data.members.filter(function (x) { return x.id !== id; });
+    addActivity("Removed " + m.name + " from the team");
+    saveData();
+    showAll();
+  });
+}
+
+function addNote() {
+  data.notes.unshift({id: makeId(), text: el("noteText").value.trim(), author: data.currentUserId, time: new Date().toLocaleString("en-IN"), pinned: false});
+  addActivity("Added a note");
+  el("noteForm").reset();
+  saveData();
+  showAll();
+}
+
+function togglePin(id) {
+  for (var i = 0; i < data.notes.length; i++) {
+    if (data.notes[i].id === id) { data.notes[i].pinned = !data.notes[i].pinned; }
+  }
+  saveData();
+  showAll();
+}
+
+function deleteNote(id) {
+  data.notes = data.notes.filter(function (n) { return n.id !== id; });
+  addActivity("Deleted a note");
+  saveData();
+  showAll();
+}
+
+function saveProfile() {
+  data.profile = {
+    name: el("pName").value.trim(), age: el("pAge").value, phone: el("pPhone").value.trim(),
+    address: el("pAddress").value.trim(), emergency: el("pEmergency").value.trim(),
+    likes: el("pLikes").value.trim(), needs: el("pNeeds").value.trim(), routine: el("pRoutine").value.trim()
+  };
+  addActivity("Updated the care profile");
+  saveData();
+  showAll();
+  showToast("Profile saved");
+}
+
+function fillMyProfile() {
+  var user = currentUser();
+  el("meName").value = user.name;
+  el("meRole").value = user.role;
+  el("mePhone").value = user.phone;
+  el("mePatient").value = data.profile.name;
+  el("meRole").disabled = !isAdmin();
+  el("mePatient").disabled = !isAdmin();
+  el("meHint").textContent = isAdmin() ? "" : "Only an Admin can change a role or the patient's name.";
+}
+
+function saveMyProfile() {
+  var user = currentUser();
+  var wasAdmin = user.role === "Admin";
+  var newRole = wasAdmin ? el("meRole").value : user.role;
+  if (wasAdmin && newRole !== "Admin") {
+    var otherAdmins = 0;
+    for (var i = 0; i < data.members.length; i++) {
+      if (data.members[i].role === "Admin" && data.members[i].id !== user.id) { otherAdmins++; }
+    }
+    if (otherAdmins === 0) {
+      showToast("There must be at least one Admin. Make someone else an Admin first.");
+      el("meRole").value = "Admin";
+      return;
+    }
+  }
+  user.name = el("meName").value.trim();
+  user.role = newRole;
+  user.phone = el("mePhone").value.trim();
+  if (wasAdmin) { data.profile.name = el("mePatient").value.trim(); }
+  addActivity("Updated the profile of " + user.name);
+  saveData();
+  showAll();
+  showToast("Profile saved");
+}
+
+function connectForm(formId, handler) {
+  var form = el(formId);
+  var button = form.querySelector('button[type="submit"]');
+  button.type = "button";
+  button.addEventListener("click", function () {
+    if (!form.reportValidity()) { return; }
+    handler();
+  });
+}
+
+var askAction = null;
+
+function askFirst(text, action) {
+  el("askText").textContent = text;
+  askAction = action;
+  el("askDialog").showModal();
+}
+
+function csvCell(value) { return '"' + String(value).replace(/"/g, '""') + '"'; }
+
+function exportLog() {
+  var text = "When,Task,Done by,Note\n";
+  for (var i = 0; i < data.logs.length; i++) {
+    var l = data.logs[i];
+    text += csvCell(l.time) + "," + csvCell(l.title) + "," + csvCell(l.who) + "," + csvCell(l.note) + "\n";
+  }
+  var link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([text], {type: "text/csv"}));
+  link.download = "care-log.csv";
+  link.click();
+}
+
+function checkReminders() {
+  for (var i = 0; i < data.tasks.length; i++) {
+    var task = data.tasks[i];
+    var state = taskState(task);
+    var key = task.id + task.date + state;
+    if ((state === "soon" || state === "overdue") && !shownReminders[key]) {
+      shownReminders[key] = true;
+      showToast((state === "soon" ? "Reminder: " : "Overdue: ") + task.title + " (" + showTime(task.time) + ")");
+    }
+  }
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+  var dark = document.body.classList.contains("dark");
+  el("themeBtn").textContent = dark ? "Light mode" : "Dark mode";
+  try { localStorage.setItem("carecircle_theme", dark ? "dark" : "light"); } catch (e) {}
+}
+
+var menuButtons = document.querySelectorAll("nav button[data-page]");
+for (var m = 0; m < menuButtons.length; m++) {
+  menuButtons[m].addEventListener("click", function () { showPage(this.getAttribute("data-page")); });
+}
+connectForm("taskForm", saveTask);
+el("cancelEditBtn").addEventListener("click", clearTaskForm);
+connectForm("memberForm", addMember);
+connectForm("noteForm", addNote);
+connectForm("profileForm", saveProfile);
+connectForm("meForm", saveMyProfile);
+connectForm("doneForm", finishTask);
+document.addEventListener("submit", function (event) { event.preventDefault(); });
+el("askYes").addEventListener("click", function () {
+  el("askDialog").close();
+  if (askAction) { askAction(); }
+});
+el("askNo").addEventListener("click", function () { el("askDialog").close(); });
+el("doneCancel").addEventListener("click", function () { el("doneDialog").close(); });
+el("searchBox").addEventListener("input", renderTasks);
+el("statusFilter").addEventListener("change", renderTasks);
+el("exportBtn").addEventListener("click", exportLog);
+el("printBtn").addEventListener("click", function () { window.print(); });
+el("themeBtn").addEventListener("click", toggleTheme);
+el("userSelect").addEventListener("change", function () {
+  data.currentUserId = this.value;
+  saveData();
+  showAll();
+  showToast("Now logged in as " + currentUser().name + " (" + currentUser().role + ")");
+});
+
+try { if (localStorage.getItem("carecircle_theme") === "dark") { toggleTheme(); } } catch (e) {}
+clearTaskForm();
+showAll();
+setTimeout(checkReminders, 800);
+setInterval(function () { checkReminders(); renderDashboard(); }, 30000);
+</script>
+</body>
+</html>
